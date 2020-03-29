@@ -1,14 +1,14 @@
 {
-    "name": "Docsend slide downloader",
+    "name": "DocSend slide deck downloader",
     "version": "1.0",
-    "description": "Download the slides from a Docsend slide deck",
+    "description": "Download any DocSend slide deck as a PDF",
     "permissions": ["declarativeContent", "activeTab"],
     "background": {
         "scripts": ["background.js"],
         "persistent": false
     },
     "page_action": {
-        "default_title": "Download slide deck"
+        "default_title": "Download DocSend slide deck as a PDF"
     },
     "manifest_version": 2
 }
