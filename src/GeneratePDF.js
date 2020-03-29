@@ -30,16 +30,3 @@ const buildPdf = async (imageUrls) => {
     await addSlidesToPDF(imageUrls);
     doc.end();
 }
-
-stream.on("finish", () => {
-    slideDeckGenerationInProgress = false;
-    let blobUrl = stream.toBlobURL('application/pdf');
-    let totalTime = new Date().getTime() - startTime;
-    initiateDownload(blobUrl);
-    hideCustomAlert();
-    showDefaultAlert("Done ! Slide deck PDF generated in " + String(totalTime) + " ms.");
-})
-
-
-
-

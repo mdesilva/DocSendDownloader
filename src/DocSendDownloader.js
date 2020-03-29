@@ -1,3 +1,4 @@
+let connection;
 let numSlides = parseInt((document.getElementsByClassName("page-label")[0].innerHTML).split(" ")[0]);
 let baseUrl = window.location.href;
 let metadataEndpoint = baseUrl.charAt(baseUrl.length-1) == "/" ? baseUrl + "page_data/" : baseUrl + "/page_data/";
@@ -34,22 +35,38 @@ let generateSlideDeckPdf = async () => {
 }
 
 chrome.runtime.onConnect.addListener((port) => {
+    connection = port;
     port.onMessage.addListener((message) => {
-        if (message.requestType = "GENERATE_PDF" && userIsAuthenticated()) {
-            if (slideDeckGenerationInProgress) {
-                showCustomAlert("Please wait. Still generating slide deck as PDF...");
-            }
-            else if (slideDeckAlreadyDownloaded) {
-                showDefaultAlert("Slide deck was already downloaded during this session. Please reload the page to download again.")
-            } 
-            else {
+        if (userIsAuthenticated()) {
+            if (message.requestType == "GENERATE_PDF") {
                 slideDeckGenerationInProgress = true;
                 slideDeckAlreadyDownloaded = true;
                 showCustomAlert("Generating slide deck as PDF...");
                 generateSlideDeckPdf();
+            } 
+            else if (message.requestType == "CHECK_PROGRESS") {
+                if (slideDeckGenerationInProgress) {
+                    showCustomAlert("Please wait. Still generating slide deck as PDF...");
+                }
+                else if (slideDeckAlreadyDownloaded) {
+                    showDefaultAlert("Slide deck was already downloaded during this session. Please reload the page to download again.")
+                } else {
+                    showDefaultAlert("ERROR: Slide deck download progress unknown. Please try again.");
+                }
             }
         } else {
             showDefaultAlert("You must be signed in to download this slide deck as a PDF.")
         }
     })
+})
+
+
+stream.on("finish", () => {
+    slideDeckGenerationInProgress = false;
+    let blobUrl = stream.toBlobURL('application/pdf');
+    let totalTime = new Date().getTime() - startTime;
+    initiateDownload(blobUrl);
+    hideCustomAlert();
+    showDefaultAlert("Done ! Slide deck PDF generated in " + String(totalTime) + " ms.");
+    connection.postMessage({requestType: "SET_JOB_COMPLETE"});
 })
