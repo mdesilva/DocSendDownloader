@@ -3,7 +3,7 @@ const doc = new PDFDocument({layout:'landscape', margin: 0, autoFirstPage: false
 const stream = doc.pipe(blobStream());
 
 const getImageAsBlob = async (url) => 
-    await fetch("https://cors-anywhere.herokuapp.com/" + url)
+    await fetch("https://cors.desilva.codes/" + url)
     .then((response) =>{
         return response.blob();
     })
