@@ -27,7 +27,7 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
         chrome.declarativeContent.onPageChanged.addRules([{
             conditions: [new chrome.declarativeContent.PageStateMatcher({
-                pageUrl: {hostEquals: 'docsend.com', pathContains: 'view'},
+                pageUrl: {hostSuffix: 'docsend.com', pathContains: 'view'},
             })],
             actions: [new chrome.declarativeContent.ShowPageAction()]
         }]);
