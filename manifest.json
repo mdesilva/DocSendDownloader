@@ -1,6 +1,6 @@
 {
     "name": "DocSend Slide Deck Downloader",
-    "version": "1.4",
+    "version": "1.5",
     "description": "Download any DocSend slide deck as a PDF",
     "permissions": ["declarativeContent", "activeTab"],
     "background": {

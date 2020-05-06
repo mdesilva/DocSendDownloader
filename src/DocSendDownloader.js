@@ -41,7 +41,7 @@ chrome.runtime.onConnect.addListener((port) => {
             if (message.requestType == "GENERATE_PDF") {
                 slideDeckGenerationInProgress = true;
                 slideDeckAlreadyDownloaded = true;
-                showCustomAlert("Generating slide deck as PDF...");
+                showCustomAlert(`Generating slide deck as PDF: 0/${numSlides} slides complete...`);
                 generateSlideDeckPdf();
             } 
             else if (message.requestType == "CHECK_PROGRESS") {
