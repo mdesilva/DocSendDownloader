@@ -36,6 +36,19 @@ chrome.runtime.onInstalled.addListener(() => {
 
 
 chrome.pageAction.onClicked.addListener(() => {
+    
+    chrome.webRequest.onHeadersReceived.addListener(
+        function(response) {
+            response.responseHeaders.push({'name': "Access-Control-Allow-Origin", 'value': "*"});
+            response.responseHeaders.push({'name': "Access-Control-Allow-Methods", 'value': "GET, OPTIONS"});
+            return {responseHeaders: response.responseHeaders}
+        },
+        {
+            urls: ["https://*.docsend.com/*", "https://*.cloudfront.net/*"]
+        },
+        ["blocking", "responseHeaders", "extraHeaders"]
+    )
+
     if (jobComplete || jobInProgress) {
         try {
             connection.postMessage({requestType: "CHECK_PROGRESS"});

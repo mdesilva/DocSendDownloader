@@ -4,7 +4,7 @@ const doc = new PDFDocument({layout:'landscape', margin: 0, autoFirstPage: false
 const stream = doc.pipe(blobStream());
 
 const getImageAsBlob = async (url) => 
-    await fetch("https://cors.desilva.codes/" + url)
+    await fetch(url)
     .then((response) =>{
         numSlidesComplete++;
         showCustomAlert(`Generating slide deck as PDF: ${numSlidesComplete}/${numSlides} slides complete...`);
