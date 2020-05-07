@@ -1,11 +1,10 @@
 {
     "name": "DocSend Slide Deck Downloader",
-    "version": "1.4",
+    "version": "1.6",
     "description": "Download any DocSend slide deck as a PDF",
-    "permissions": ["declarativeContent", "activeTab"],
+    "permissions": ["declarativeContent", "activeTab", "webRequest", "webRequestBlocking", "*://*.docsend.com/", "*://*.cloudfront.net/"],
     "background": {
-        "scripts": ["background.js"],
-        "persistent": false
+        "scripts": ["background.js"]
     },
     "page_action": {
         "default_title": "Download a DocSend slide deck as a PDF"

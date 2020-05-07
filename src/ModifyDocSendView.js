@@ -31,8 +31,8 @@ let showDefaultAlert = (message) => {
 }
 
 
-let showCustomAlert = (message, showLoadingIcon=false) => {
-    customAlertContainerText.innerHTML = showLoadingIcon == true ? (loadingIconSVG + "<p>" + message + "</p>") : message;
+let showCustomAlert = (message) => {
+    customAlertContainerText.innerHTML = message;
     customAlertContainer.style = "display: block; padding: 10px; margin-bottom: 0px;";
 }
 
