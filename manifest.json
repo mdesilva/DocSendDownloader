@@ -3,6 +3,7 @@
     "version": "1.7",
     "description": "Download any DocSend slide deck as a PDF",
     "permissions": [
+        "tabs",
         "activeTab", 
         "declarativeNetRequest", 
         "declarativeNetRequestFeedback"
