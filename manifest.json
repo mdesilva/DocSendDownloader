@@ -4,7 +4,8 @@
     "description": "Download any DocSend slide deck as a PDF",
     "permissions": [
         "tabs",
-        "activeTab", 
+        "activeTab",
+        "scripting",
         "declarativeNetRequest", 
         "declarativeNetRequestFeedback",
         "declarativeContent"
@@ -23,6 +24,6 @@
     "host_permissions": [
         "*://*.docsend.com/*",
         "*://*.cloudfront.net/*"
-    ], 
+    ],
     "manifest_version": 3
 }
