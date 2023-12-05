@@ -6,7 +6,8 @@
         "tabs",
         "activeTab", 
         "declarativeNetRequest", 
-        "declarativeNetRequestFeedback"
+        "declarativeNetRequestFeedback",
+        "declarativeContent"
     ],
     "action": {
         "default_title": "Download a DocSend slide deck as a PDF"
