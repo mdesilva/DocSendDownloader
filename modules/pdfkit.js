@@ -2819,7 +2819,7 @@
   class AFMFont {
     static async open(url) {
       try {
-          const response = await fetch(url);
+          const response = await fetch(url, {mode: 'no-cors'});
           if (!response.ok) {
               throw new Error(`HTTP error! Status: ${response.status}`);
           }
@@ -3396,7 +3396,7 @@
   
   class PDFFontFactory {
     static async fetchFontData(url) {
-        const response = await fetch(url);
+        const response = await fetch(url, {mode: 'no-cors'});
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -4653,7 +4653,7 @@
   
   class PDFImage {
     static async fetchImageData(url) {
-        const response = await fetch(url);
+        const response = await fetch(url, {mode: 'no-cors'});
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -6025,7 +6025,7 @@
               data = Buffer.from(match[2], 'base64');
           } else {
               // Fetch the file data from a URL
-              const response = await fetch(src);
+              const response = await fetch(src, {mode: 'no-cors'});
               if (!response.ok) {
                   throw new Error(`HTTP error! Status: ${response.status}`);
               }
@@ -6121,7 +6121,7 @@
   
   
     async _addColorOutputIntent(pICCPath) {
-      const response = await fetch(pICCPath);
+      const response = await fetch(pICCPath, {mode: 'no-cors'});
       if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -29380,7 +29380,7 @@
       formats.push(format);
   };
   fontkit.openSync = async function(url, postscriptName) {
-      const response = await fetch(url);
+      const response = await fetch(url, {mode: 'no-cors'});
       if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -61332,7 +61332,7 @@
   module.exports = class PNG {
     static async decode(url, fn) {
       try {
-          const response = await fetch(url);
+          const response = await fetch(url, {mode: 'no-cors'});
           if (!response.ok) {
               throw new Error(`HTTP error! Status: ${response.status}`);
           }
@@ -61346,7 +61346,7 @@
   }
   
     static async load(url) {
-      const response = await fetch(url);
+      const response = await fetch(url, {mode: 'no-cors'});
       if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
       }

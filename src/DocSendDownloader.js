@@ -18,12 +18,15 @@ let userIsAuthenticated = () => {
 
 let getSlideImageUrls = async () => {
     for(let i=1; i<=numSlides; i++) {
+        console.log('endpoint:', metadataEndpoint + String(i));
         let url = metadataEndpoint + String(i);
-        await fetch(url)
+        await fetch(url, {mode: 'no-cors'})
         .then((response) => {
+            console.log('getSlideImageUrls response', response)
             return response.json();
         })
         .then((data) => {
+            console.log(data, "data")
             slideImageUrls.push(data.imageUrl);
         })
     }

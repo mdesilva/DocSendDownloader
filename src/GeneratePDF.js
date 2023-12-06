@@ -4,8 +4,10 @@ const doc = new PDFDocument({layout:'landscape', margin: 0, autoFirstPage: false
 const stream = doc.pipe(blobStream());
 
 const getImageAsBlob = async (url) => 
-    await fetch(url)
+    await fetch(url, {mode: 'no-cors'})
     .then((response) =>{
+        console.log(url, "url")
+        console.log(response, "response")
         numSlidesComplete++;
         showCustomAlert(`Generating slide deck as PDF: ${numSlidesComplete}/${numSlides} slides complete...`);
         return response.blob();
@@ -21,12 +23,14 @@ const getImageAsBlob = async (url) =>
     })
 
 const addSlidesToPDF = async (imageUrls) =>{
+    console.log(imageUrls, "imageUrls")
     for (let i=0; i<imageUrls.length; i++) {
         await getImageAsBlob(imageUrls[i]).then(data => {
+            console.log(data, "data")
             const img = doc.openImage(data);
+            console.log(img.width, img.height, img);
             doc.addPage({size: [img.width, img.height]});
             doc.image(img, 0, 0);
-        
         })    
     }
 }
