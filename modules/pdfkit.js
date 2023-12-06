@@ -5,7 +5,6 @@
   function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
   
   var stream = _interopDefault(require('stream'));
-  var fs = require('fs');
   var zlib = _interopDefault(require('zlib'));
   var CryptoJS = _interopDefault(require('crypto-js'));
   var fontkit = _interopDefault(require('fontkit'));
@@ -2818,9 +2817,20 @@
   `.split(/\s+/);
   
   class AFMFont {
-    static open(filename) {
-      return new AFMFont(fs.readFileSync(filename, 'utf8'));
-    }
+    static async open(url) {
+      try {
+          const response = await fetch(url);
+          if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          const data = await response.text();
+          return new AFMFont(data);
+      } catch (error) {
+          console.error('Fetch error:', error);
+          return null; // or handle the error as appropriate for your use case
+      }
+  }
+  
   
     constructor(contents) {
       this.contents = contents;
@@ -3385,33 +3395,42 @@
   }
   
   class PDFFontFactory {
-    static open(document, src, family, id) {
-      let font;
-  
-      if (typeof src === 'string') {
-        if (StandardFont.isStandardFont(src)) {
-          return new StandardFont(document, src, id);
+    static async fetchFontData(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-  
-        src = fs.readFileSync(src);
-      }
-  
-      if (Buffer.isBuffer(src)) {
-        font = fontkit.create(src, family);
-      } else if (src instanceof Uint8Array) {
-        font = fontkit.create(Buffer.from(src), family);
-      } else if (src instanceof ArrayBuffer) {
-        font = fontkit.create(Buffer.from(new Uint8Array(src)), family);
-      }
-  
-      if (font == null) {
-        throw new Error('Not a supported font format or standard PDF font.');
-      }
-  
-      return new EmbeddedFont(document, font, id);
+        return new Uint8Array(await response.arrayBuffer());
     }
-  
-  }
+
+    static async open(document, src, family, id) {
+        let font;
+
+        if (typeof src === 'string') {
+            if (StandardFont.isStandardFont(src)) {
+                return new StandardFont(document, src, id);
+            }
+
+            try {
+                src = await PDFFontFactory.fetchFontData(src);
+            } catch (error) {
+                console.error('Error fetching font:', error);
+                throw error;
+            }
+        }
+
+        if (src instanceof Uint8Array || src instanceof ArrayBuffer) {
+            font = fontkit.create(Buffer.from(src), family);
+        }
+
+        if (!font) {
+            throw new Error('Not a supported font format or standard PDF font.');
+        }
+
+        return new EmbeddedFont(document, font, id);
+    }
+}
+
   
   var FontsMixin = {
     initFonts(defaultFont = 'Helvetica') {
@@ -3463,24 +3482,29 @@
   
   
       const id = `F${++this._fontCount}`;
-      this._font = PDFFontFactory.open(this, src, family, id); // check for existing font familes with the same name already in the PDF
-      // useful if the font was passed as a buffer
+      PDFFontFactory.open(this, src, family, id)
+      .then(font => {
+          this._font = font;
   
-      if (font = this._fontFamilies[this._font.name]) {
-        this._font = font;
-        return this;
-      } // save the font for reuse later
+          // Check if the font is already in _fontFamilies
+          if (font = this._fontFamilies[this._font.name]) {
+              this._font = font;
+          } else {
+              // Save the font for reuse later
+              if (cacheKey) {
+                  this._fontFamilies[cacheKey] = this._font;
+              }
   
+              if (this._font.name) {
+                  this._fontFamilies[this._font.name] = this._font;
+              }
+          }
   
-      if (cacheKey) {
-        this._fontFamilies[cacheKey] = this._font;
-      }
-  
-      if (this._font.name) {
-        this._fontFamilies[this._font.name] = this._font;
-      }
-  
-      return this;
+          return this; // This return is for chaining, but its effect depends on how this method is used.
+      })
+      .catch(error => {
+          console.error('Error loading font:', error);
+      });
     },
   
     fontSize(_fontSize) {
@@ -4628,37 +4652,45 @@
   */
   
   class PDFImage {
-    static open(src, label) {
-      let data;
-  
-      if (Buffer.isBuffer(src)) {
-        data = src;
-      } else if (src instanceof ArrayBuffer) {
-        data = Buffer.from(new Uint8Array(src));
-      } else {
-        let match;
-  
-        if (match = /^data:.+;base64,(.*)$/.exec(src)) {
-          data = Buffer.from(match[1], 'base64');
-        } else {
-          data = fs.readFileSync(src);
-  
-          if (!data) {
-            return;
-          }
+    static async fetchImageData(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-      }
-  
-      if (data[0] === 0xff && data[1] === 0xd8) {
-        return new JPEG(data, label);
-      } else if (data[0] === 0x89 && data.toString('ascii', 1, 4) === 'PNG') {
-        return new PNGImage(data, label);
-      } else {
-        throw new Error('Unknown image format.');
-      }
+        return new Uint8Array(await response.arrayBuffer());
     }
-  
+
+    static async open(src, label) {
+        let data;
+
+        if (Buffer.isBuffer(src)) {
+            data = src;
+        } else if (src instanceof ArrayBuffer) {
+            data = Buffer.from(new Uint8Array(src));
+        } else if (typeof src === 'string') {
+            let match;
+            if (match = /^data:.+;base64,(.*)$/.exec(src)) {
+                data = Buffer.from(match[1], 'base64');
+            } else {
+                try {
+                    data = await PDFImage.fetchImageData(src);
+                } catch (error) {
+                    console.error('Error fetching image:', error);
+                    throw error;
+                }
+            }
+        }
+
+        if (data[0] === 0xff && data[1] === 0xd8) {
+            return new JPEG(data, label);
+        } else if (data[0] === 0x89 && data.toString('ascii', 1, 4) === 'PNG') {
+            return new PNGImage(data, label);
+        } else {
+            throw new Error('Unknown image format.');
+        }
+    }
   }
+
   
   var ImagesMixin = {
     initImages() {
@@ -4777,22 +4809,22 @@
     },
   
     openImage(src) {
-      let image;
-  
-      if (typeof src === 'string') {
-        image = this._imageRegistry[src];
+      if (typeof src === 'string' && this._imageRegistry[src]) {
+          return Promise.resolve(this._imageRegistry[src]);
       }
   
-      if (!image) {
-        image = PDFImage.open(src, `I${++this._imageCount}`);
-  
-        if (typeof src === 'string') {
-          this._imageRegistry[src] = image;
-        }
-      }
-  
-      return image;
-    }
+      return PDFImage.open('url-to-image-file', `I${++this._imageCount}`)
+          .then(image => {
+              if (typeof src === 'string') {
+                  this._imageRegistry[src] = image;
+              }
+              return image;
+          })
+          .catch(error => {
+              console.error('Error loading image:', error);
+              throw error; // Re-throw the error if you want calling code to handle it
+          });
+      }  
   
   };
   
@@ -5966,101 +5998,90 @@
      *  * options.modifiedDate: override modified date
      * @returns filespec reference
      */
-    file(src, options = {}) {
+    async file(src, options = {}) {
       options.name = options.name || src;
       const refBody = {
-        Type: 'EmbeddedFile',
-        Params: {}
+          Type: 'EmbeddedFile',
+          Params: {}
       };
       let data;
   
       if (!src) {
-        throw new Error('No src specified');
+          throw new Error('No src specified');
       }
   
       if (Buffer.isBuffer(src)) {
-        data = src;
+          data = src;
       } else if (src instanceof ArrayBuffer) {
-        data = Buffer.from(new Uint8Array(src));
+          data = Buffer.from(new Uint8Array(src));
       } else {
-        let match;
+          let match;
   
-        if (match = /^data:(.*);base64,(.*)$/.exec(src)) {
-          if (match[1]) {
-            refBody.Subtype = match[1].replace('/', '#2F');
+          if (match = /^data:(.*);base64,(.*)$/.exec(src)) {
+              if (match[1]) {
+                  refBody.Subtype = match[1].replace('/', '#2F');
+              }
+  
+              data = Buffer.from(match[2], 'base64');
+          } else {
+              // Fetch the file data from a URL
+              const response = await fetch(src);
+              if (!response.ok) {
+                  throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+              data = Buffer.from(new Uint8Array(await response.arrayBuffer()));
           }
+      }
   
-          data = Buffer.from(match[2], 'base64');
-        } else {
-          data = fs.readFileSync(src);
-  
-          if (!data) {
-            throw new Error(`Could not read contents of file at filepath ${src}`);
-          } // update CreationDate and ModDate
-  
-  
-          const {
-            birthtime,
-            ctime
-          } = fs.statSync(src);
-          refBody.Params.CreationDate = birthtime;
-          refBody.Params.ModDate = ctime;
-        }
-      } // override creation date and modified date
-  
-  
+      // Handle optional creation and modified dates
       if (options.creationDate instanceof Date) {
-        refBody.Params.CreationDate = options.creationDate;
+          refBody.Params.CreationDate = options.creationDate;
       }
   
       if (options.modifiedDate instanceof Date) {
-        refBody.Params.ModDate = options.modifiedDate;
-      } // add optional subtype
+          refBody.Params.ModDate = options.modifiedDate;
+      }
   
-  
+      // Handle optional subtype
       if (options.type) {
-        refBody.Subtype = options.type.replace('/', '#2F');
-      } // add checksum and size information
+          refBody.Subtype = options.type.replace('/', '#2F');
+      }
   
-  
+      // Calculate checksum and size
       const checksum = CryptoJS.MD5(CryptoJS.lib.WordArray.create(new Uint8Array(data)));
       refBody.Params.CheckSum = new String(checksum);
-      refBody.Params.Size = data.byteLength; // save some space when embedding the same file again
-      // if a file with the same name and metadata exists, reuse its reference
+      refBody.Params.Size = data.byteLength;
   
+      // Save some space when embedding the same file again
       let ref;
-      if (!this._fileRegistry) this._fileRegistry = {};
+      this._fileRegistry = this._fileRegistry || {};
       let file = this._fileRegistry[options.name];
   
       if (file && isEqual(refBody, file)) {
-        ref = file.ref;
+          ref = file.ref;
       } else {
-        ref = this.ref(refBody);
-        ref.end(data);
-        this._fileRegistry[options.name] = _objectSpread2(_objectSpread2({}, refBody), {}, {
-          ref
-        });
-      } // add filespec for embedded file
+          ref = this.ref(refBody);
+          ref.end(data);
+          this._fileRegistry[options.name] = { ...refBody, ref };
+      }
   
-  
+      // Create filespec for embedded file
       const fileSpecBody = {
-        Type: 'Filespec',
-        F: new String(options.name),
-        EF: {
-          F: ref
-        },
-        UF: new String(options.name)
+          Type: 'Filespec',
+          F: new String(options.name),
+          EF: { F: ref },
+          UF: new String(options.name)
       };
   
       if (options.description) {
-        fileSpecBody.Desc = new String(options.description);
+          fileSpecBody.Desc = new String(options.description);
       }
   
       const filespec = this.ref(fileSpecBody);
       filespec.end();
   
       if (!options.hidden) {
-        this.addNamedEmbeddedFile(options.name, filespec);
+          this.addNamedEmbeddedFile(options.name, filespec);
       }
   
       return filespec;
@@ -6085,33 +6106,46 @@
       }
     },
   
-    endSubset() {
+    async endSubset() {
       this._addPdfaMetadata();
   
-      const jsPath = `${__dirname}/data/sRGB_IEC61966_2_1.icc`;
-      const jestPath = `${__dirname}/../color_profiles/sRGB_IEC61966_2_1.icc`;
+      // URL where your ICC profile is hosted
+      const iccProfileUrl = 'https://example.com/path/to/sRGB_IEC61966_2_1.icc';
   
-      this._addColorOutputIntent(fs.existsSync(jsPath) ? jsPath : jestPath);
-    },
+      try {
+          await this._addColorOutputIntent(iccProfileUrl);
+      } catch (error) {
+          console.error('Error adding color output intent:', error);
+      }
+  },
   
-    _addColorOutputIntent(pICCPath) {
-      const iccProfile = fs.readFileSync(pICCPath);
+  
+    async _addColorOutputIntent(pICCPath) {
+      const response = await fetch(pICCPath);
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const iccProfile = new Uint8Array(await response.arrayBuffer());
+  
       const colorProfileRef = this.ref({
-        Length: iccProfile.length,
-        N: 3
+          Length: iccProfile.length,
+          N: 3
       });
       colorProfileRef.write(iccProfile);
       colorProfileRef.end();
+  
       const intentRef = this.ref({
-        Type: 'OutputIntent',
-        S: 'GTS_PDFA1',
-        Info: new String('sRGB IEC61966-2.1'),
-        OutputConditionIdentifier: new String('sRGB IEC61966-2.1'),
-        DestOutputProfile: colorProfileRef
+          Type: 'OutputIntent',
+          S: 'GTS_PDFA1',
+          Info: new String('sRGB IEC61966-2.1'),
+          OutputConditionIdentifier: new String('sRGB IEC61966-2.1'),
+          DestOutputProfile: colorProfileRef
       });
       intentRef.end();
+  
       this._root.data.OutputIntents = [intentRef];
-    },
+  },
+  
   
     _getPdfaid() {
       return `
@@ -29345,27 +29379,40 @@
   fontkit.registerFormat = function (format) {
       formats.push(format);
   };
-  fontkit.openSync = function (filename, postscriptName) {
-      var buffer = fs.readFileSync(filename);
+  fontkit.openSync = async function(url, postscriptName) {
+      const response = await fetch(url);
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const buffer = new Uint8Array(await response.arrayBuffer());
       return fontkit.create(buffer, postscriptName);
   };
-  fontkit.open = function (filename, postscriptName, callback) {
-      if (typeof postscriptName === 'function') {
-          callback = postscriptName;
-          postscriptName = null;
-      }
-      fs.readFile(filename, function (err, buffer) {
-          if (err) {
-              return callback(err);
-          }
-          try {
-              var font = fontkit.create(buffer, postscriptName);
-          } catch (e) {
-              return callback(e);
-          }
-          return callback(null, font);
-      });
-      return;
+
+  fontkit.open = function (url, postscriptName, callback) {
+    if (typeof postscriptName === 'function') {
+        callback = postscriptName;
+        postscriptName = null;
+    }
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.arrayBuffer();
+        })
+        .then(arrayBuffer => {
+            const buffer = Buffer.from(new Uint8Array(arrayBuffer));
+            try {
+                var font = fontkit.create(buffer, postscriptName);
+                callback(null, font);
+            } catch (e) {
+                callback(e);
+            }
+        })
+        .catch(err => {
+            callback(err);
+        });
   };
   fontkit.create = function (buffer, postscriptName) {
       for (var i = 0; i < formats.length; i++) {
@@ -61283,17 +61330,31 @@
   const zlib = require('zlib');
   
   module.exports = class PNG {
-    static decode(path, fn) {
-      return fs.readFile(path, function(err, file) {
-        const png = new PNG(file);
-        return png.decode(pixels => fn(pixels));
-      });
-    }
+    static async decode(url, fn) {
+      try {
+          const response = await fetch(url);
+          if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          const file = new Uint8Array(await response.arrayBuffer());
+          const png = new PNG(file);
+          return png.decode(pixels => fn(pixels));
+      } catch (err) {
+          console.error('Error fetching PNG file:', err);
+          throw err; // Or handle the error as appropriate
+      }
+  }
   
-    static load(path) {
-      const file = fs.readFileSync(path);
-      return new PNG(file);
-    }
+    static async load(url) {
+      const response = await fetch(url);
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(new Uint8Array(arrayBuffer));
+      return new PNG(buffer);
+  }
+  
   
     constructor(data) {
       let i;
