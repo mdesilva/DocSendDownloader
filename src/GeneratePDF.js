@@ -22,18 +22,24 @@ const getImageAsBlob = async (url) =>
         console.error("Error fetching slide deck images.")
     })
 
-const addSlidesToPDF = async (imageUrls) =>{
-    console.log(imageUrls, "imageUrls")
-    for (let i=0; i<imageUrls.length; i++) {
-        await getImageAsBlob(imageUrls[i]).then(data => {
-            console.log(data, "data")
+    const addSlidesToPDF = async (imageUrls) => {
+        console.log(imageUrls, "imageUrls");
+        const imagePromises = imageUrls.map(async (imageUrl) => {
+            const data = await getImageAsBlob(imageUrl);
+            console.log(data, "data");
             const img = doc.openImage(data);
             console.log(img.width, img.height, img);
-            doc.addPage({size: [img.width, img.height]});
+            return { width: img.width, height: img.height, img };
+        });
+    
+        const images = await Promise.all(imagePromises);
+    
+        images.forEach(({ width, height, img }) => {
+            doc.addPage({ size: [width, height] });
             doc.image(img, 0, 0);
-        })    
-    }
-}
+        });
+    };
+    
 
 const buildPdf = async (imageUrls) => {
     startTime = new Date().getTime();
