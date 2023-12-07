@@ -20,7 +20,7 @@ let getSlideImageUrls = async () => {
     for(let i=1; i<=numSlides; i++) {
         console.log('endpoint:', metadataEndpoint + String(i));
         let url = metadataEndpoint + String(i);
-        await fetch(url, {mode: 'no-cors'})
+        await fetch(url)
         .then((response) => {
             console.log('getSlideImageUrls response', response)
             return response.json();

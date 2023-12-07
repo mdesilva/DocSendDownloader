@@ -25,5 +25,9 @@
         "*://*.docsend.com/*",
         "*://*.cloudfront.net/*"
     ],
+    "optional_host_permissions":[
+        "https://*/*",
+        "http://*/*"
+    ],
     "manifest_version": 3
 }
