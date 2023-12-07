@@ -6,7 +6,8 @@
         "tabs",
         "activeTab",
         "scripting",
-        "declarativeNetRequest", 
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess",
         "declarativeNetRequestFeedback",
         "declarativeContent"
     ],

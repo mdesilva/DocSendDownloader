@@ -2,6 +2,21 @@ let connection;
 let jobInProgress = false;
 let jobComplete = false;
 
+const modifyHeadersRule = {
+    id: 1,
+    priority: 1,
+    action: {
+        type: 'modifyHeaders',
+        requestHeaders: [
+            { header: "Access-Control-Allow-Origin", operation: "set", value: "*" }
+        ]
+    },
+    condition: {
+        urlFilter: 'https://*.docsend.com/*',
+        resourceTypes: ['xmlhttprequest']
+    }
+};
+
 const executeJob = () => {
     jobInProgress = true;
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -31,6 +46,10 @@ chrome.runtime.onInstalled.addListener(() => {
             })],
             actions: [new chrome.declarativeContent.ShowPageAction()]
         }]);
+    });
+    chrome.declarativeNetRequest.updateDynamicRules({
+        addRules: [modifyHeadersRule],
+        removeRuleIds: [1]
     });
 });
 
