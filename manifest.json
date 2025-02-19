@@ -2,7 +2,7 @@
     "name": "DocSend Slide Deck Downloader",
     "version": "2.0",
     "description": "Download any DocSend slide deck as a PDF",
-    "permissions": ["declarativeContent", "activeTab", "webRequest", "declarativeNetRequest", "declarativeNetRequestWithHostAccess", "scripting"],
+    "permissions": ["declarativeNetRequestWithHostAccess", "scripting"],
     "host_permissions": [
         "*://*.docsend.com/",
         "*://*.cloudfront.net/*"

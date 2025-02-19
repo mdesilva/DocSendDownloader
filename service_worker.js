@@ -35,18 +35,6 @@ const executeJob = () => {
     })
 }
 
-chrome.runtime.onInstalled.addListener(() => {
-    chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
-        chrome.declarativeContent.onPageChanged.addRules([{
-            conditions: [new chrome.declarativeContent.PageStateMatcher({
-                pageUrl: {hostSuffix: 'docsend.com', pathContains: 'view'},
-            })],
-            actions: [new chrome.declarativeContent.ShowPageAction()]
-        }]);
-    });
-});
-
-
 chrome.action.onClicked.addListener(() => {
     if (jobComplete || jobInProgress) {
         try {
