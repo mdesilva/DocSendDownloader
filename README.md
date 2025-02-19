@@ -1,8 +1,6 @@
 # DocSend Slide Deck Downloader
 A Chrome extension to download DocSend slides as a PDF.
 
-Download on the Chrome Web Store: https://chrome.google.com/webstore/detail/docsend-slide-deck-downlo/bdapagnogpjnojnencohaeeeedhoncjf/
-
 ## Installation from source
 
 1. Clone this repository to your machine
