@@ -22,12 +22,18 @@ const getImageAsBlob = async (url) =>
 
 const addSlidesToPDF = async (imageUrls) =>{
     for (let i=0; i<imageUrls.length; i++) {
-        await getImageAsBlob(imageUrls[i]).then(data => {
+        await fetch(imageUrls[i])
+        .then((response) => {
+            return response.json();
+        })
+        .then((data) => {
+            return getImageAsBlob(data.imageUrl);
+        })
+        .then((data) => {
             const img = doc.openImage(data);
             doc.addPage({size: [img.width, img.height]});
             doc.image(img, 0, 0);
-        
-        })    
+        })
     }
 }
 
