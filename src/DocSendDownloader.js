@@ -19,13 +19,7 @@ let userIsAuthenticated = () => {
 let getSlideImageUrls = async () => {
     for(let i=1; i<=numSlides; i++) {
         let url = metadataEndpoint + String(i);
-        await fetch(url)
-        .then((response) => {
-            return response.json();
-        })
-        .then((data) => {
-            slideImageUrls.push(data.imageUrl);
-        })
+        slideImageUrls.push(url);
     }
 }
 
