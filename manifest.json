@@ -1,30 +1,33 @@
 {
-    "name": "DocSend Slide Deck Downloader",
-    "version": "2.0",
-    "description": "Download any DocSend slide deck as a PDF",
-    "permissions": ["declarativeNetRequestWithHostAccess", "scripting"],
-    "host_permissions": [
-        "*://*.docsend.com/",
-        "*://*.cloudfront.net/*"
-    ],
-    "background": {
-        "service_worker": "service_worker.js",
-        "type": "module"
-    },
-    "declarative_net_request": {
-        "rule_resources": [{
-            "id": "ruleset_1",
-            "enabled": true,
-            "path": "rules.json"
-        }]
-    },
-    "action": {
-        "default_title": "Download a DocSend slide deck as a PDF"
-    },
-    "icons": {
-        "16": "./assets/icon16.png",
-        "48": "./assets/icon48.png",
-        "128": "./assets/icon128.png"
-    },
-    "manifest_version": 3
+  "name": "DocSend Slide Deck Downloader",
+  "version": "2.0",
+  "description": "Download any DocSend slide deck as a PDF",
+  "permissions": ["declarativeNetRequestWithHostAccess", "scripting"],
+  "host_permissions": [
+    "*://*.docsend.com/",
+    "*://*.cloudfront.net/*",
+    "*://*.docsend.dropbox.com/*"
+  ],
+  "background": {
+    "service_worker": "service_worker.js",
+    "type": "module"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  "action": {
+    "default_title": "Download a DocSend slide deck as a PDF"
+  },
+  "icons": {
+    "16": "./assets/icon16.png",
+    "48": "./assets/icon48.png",
+    "128": "./assets/icon128.png"
+  },
+  "manifest_version": 3
 }
